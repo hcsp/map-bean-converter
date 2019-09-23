@@ -2,7 +2,7 @@
 
 请实现能够完成Java Bean和Map之间相互转换的[`MapBeanConverter`](https://github.com/hcsp/map-bean-converter/blob/master/src/main/java/com/github/hcsp/reflection/MapBeanConverter.java)类，完成相应的功能。
 
-我知道这对你来说不是很容易，你需要查看文档、阅读资料，但是一旦完成，你会发现自己对类型和反射的理解又加深了一层，加油！
+我知道这对你来说不是很容易，你需要查看文档、阅读资料，但是一旦完成，你会发现自己对类型和反射的理解又加深了一层，加油！如果你忘记了什么是Java Bean，现在就是复习的大好时机。
 
 注意，我们并不反对你通过搜索来使用第三方库帮助完成这一功能，只要你有足够强大的搜索能力。
 
