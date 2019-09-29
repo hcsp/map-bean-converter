@@ -13,14 +13,19 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) throws InvocationTargetException, IllegalAccessException {
+    public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> results = new HashMap<>();
         Class clazz = bean.getClass();
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
             String name = method.getName();
             if (name.startsWith("is") || name.startsWith("get")) {
-                Object value = method.invoke(bean);
+                Object value = null;
+                try {
+                    value = method.invoke(bean);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
                 String valueName = name.split("(?<=is|get)")[1];
                 String formatedValueName = Character.toLowerCase(valueName.charAt(0)) + valueName.substring(1);
                 results.put(formatedValueName, value);
@@ -36,14 +41,19 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
-        T klassInstance = klass.getDeclaredConstructor().newInstance();
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        T klassInstance = null;
+        try {
+            klassInstance = klass.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
         for (Map.Entry entry : map.entrySet()) {
             String fieldName = (String) entry.getKey();
             String titleCase = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
             try {
                 klass.getMethod("set" + titleCase, map.get(fieldName).getClass()).invoke(klassInstance, entry.getValue());
-            } catch (NoSuchMethodException e) {
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 System.out.println("Method Not Found: set " + titleCase);
             }
         }
