@@ -1,9 +1,5 @@
 package com.github.hcsp.reflection;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
-
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,11 +12,6 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        try {
-            return PropertyUtils.describe(bean);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
         return null;
     }
 
@@ -32,14 +23,6 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-
-        try {
-            T bean = klass.getConstructor().newInstance();
-            BeanUtils.populate(bean, map);
-            return bean;
-        } catch (IllegalAccessException | InvocationTargetException | InstantiationException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
         return null;
     }
 
@@ -55,7 +38,7 @@ public class MapBeanConverter {
         System.out.println(mapToBean(DemoJavaBean.class, map));
     }
 
-    public static class DemoJavaBean {
+    static class DemoJavaBean {
         Integer id;
         String name;
 
