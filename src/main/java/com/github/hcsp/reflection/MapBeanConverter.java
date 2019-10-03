@@ -19,9 +19,8 @@ public class MapBeanConverter {
         try {
             return PropertyUtils.describe(bean);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
+            throw new RuntimeException("beanToMap转换异常：", e);
         }
-        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -38,9 +37,8 @@ public class MapBeanConverter {
             BeanUtils.populate(bean, map);
             return bean;
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException | NoSuchMethodException e) {
-            e.printStackTrace();
+            throw new RuntimeException("mapToBean转换异常：", e);
         }
-        return null;
     }
 
     public static void main(String[] args) {
