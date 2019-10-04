@@ -1,7 +1,6 @@
 package com.github.hcsp.reflection;
 
 import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
@@ -13,7 +12,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class MapBeanConverter {
-    private static final String startsWithGetOrIsPattern = "^(get|is)(\\w+)";
+    private static final String STARTS_WITH_GET_OR_IS_PATTERN = "^(get|is)([\\w$]+)";
 
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
     // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
@@ -26,28 +25,27 @@ public class MapBeanConverter {
         Class c = bean.getClass();
         return Arrays.stream(c.getMethods())
                 .filter(MapBeanConverter::isGetter)
-                .collect(Collectors.toMap(MapBeanConverter::getFieldNameFromMethod, x -> {
-                    try {
-                        return x.invoke(bean);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException();
-                    }
-                }));
+                .collect(Collectors.toMap(MapBeanConverter::getFieldNameFromMethod, method -> invokeMethod(bean, method)));
+    }
+
+    private static Object invokeMethod(Object bean, Method method) {
+        try {
+            return method.invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException();
+        }
     }
 
     private static boolean isGetter(Method method) {
-        return Pattern.matches(startsWithGetOrIsPattern, method.getName());
+        return Pattern.matches(STARTS_WITH_GET_OR_IS_PATTERN, method.getName());
     }
 
     private static String getFieldNameFromMethod(Method method) {
-        String capitalizedFieldName = method.getName().replaceFirst(startsWithGetOrIsPattern, "$2");
+        String capitalizedFieldName = method.getName().replaceFirst(STARTS_WITH_GET_OR_IS_PATTERN, "$2");
         return unCapitalize(capitalizedFieldName);
     }
 
     private static String unCapitalize(String str) {
-        if (str == null || str.isEmpty()) {
-            return str;
-        }
         return Character.toLowerCase(str.charAt(0)) + str.substring(1);
     }
 
@@ -72,11 +70,7 @@ public class MapBeanConverter {
                 }
             }
             return bean;
-        } catch (IntrospectionException
-                | IllegalAccessException
-                | InvocationTargetException
-                | NoSuchMethodException
-                | InstantiationException e) {
+        } catch (Exception e) {
             throw new RuntimeException();
         }
     }
