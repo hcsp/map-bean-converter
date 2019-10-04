@@ -32,7 +32,7 @@ public class MapBeanConverter {
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
         try {
-            T bean = klass.getConstructor().newInstance();
+            T bean = klass.getDeclaredConstructor().newInstance();
             BeanUtils.populate(bean, map);
             return bean;
         } catch (InstantiationException | IllegalAccessException |
