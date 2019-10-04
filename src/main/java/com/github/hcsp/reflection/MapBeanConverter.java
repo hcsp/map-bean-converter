@@ -35,8 +35,7 @@ public class MapBeanConverter {
             T bean = klass.getDeclaredConstructor().newInstance();
             BeanUtils.populate(bean, map);
             return bean;
-        } catch (InstantiationException | IllegalAccessException |
-                InvocationTargetException | NoSuchMethodException e) {
+        } catch (Exception e) {
             throw new RuntimeException();
         }
     }
