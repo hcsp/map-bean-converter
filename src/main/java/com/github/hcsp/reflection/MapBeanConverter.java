@@ -1,5 +1,7 @@
 package com.github.hcsp.reflection;
 
+import com.sun.xml.internal.ws.api.model.CheckedException;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -13,11 +15,26 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static Map<String, Object> beanToMap(Object bean) {
         Class beanClass = bean.getClass();
-        Integer id = (Integer) beanClass.getMethod("getId").invoke(bean);
-        String name = (String) beanClass.getMethod("getName").invoke(bean);
-        boolean isLong = (boolean) beanClass.getMethod("isLongName").invoke(bean);
+        Integer id = null;
+        try {
+            id = (Integer) beanClass.getMethod("getId").invoke(bean);
+        } catch (IllegalAccessException | RuntimeException | NoSuchMethodException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        String name = null;
+        try {
+            name = (String) beanClass.getMethod("getName").invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        boolean isLong = false;
+        try {
+            isLong = (boolean) beanClass.getMethod("isLongName").invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
         Map<String, Object> map = new HashMap<>();
         map.put("id", id);
         map.put("name", name);
@@ -32,20 +49,33 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException {
-        T demoJavaBean = klass.newInstance();
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        T demoJavaBean = null;
+        try {
+            demoJavaBean = klass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof String) {
-                klass.getMethod("setName", String.class).invoke(demoJavaBean, value);
+                try {
+                    klass.getMethod("setName", String.class).invoke(demoJavaBean, value);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
             } else {
-                klass.getMethod("setId", Integer.class).invoke(demoJavaBean, value);
+                try {
+                    klass.getMethod("setId", Integer.class).invoke(demoJavaBean, value);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return demoJavaBean;
     }
 
-    public static void main(String[] args) throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+    public static void main(String[] args) {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
