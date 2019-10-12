@@ -1,5 +1,6 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +13,30 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class beanClass = bean.getClass();
+        Integer id = null;
+        try {
+            id = (Integer) beanClass.getMethod("getId").invoke(bean);
+        } catch (IllegalAccessException | RuntimeException | NoSuchMethodException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        String name = null;
+        try {
+            name = (String) beanClass.getMethod("getName").invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        boolean isLong = false;
+        try {
+            isLong = (boolean) beanClass.getMethod("isLongName").invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("name", name);
+        map.put("longName", isLong);
+        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +47,29 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T demoJavaBean = null;
+        try {
+            demoJavaBean = klass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                try {
+                    klass.getMethod("setName", String.class).invoke(demoJavaBean, value);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    klass.getMethod("setId", Integer.class).invoke(demoJavaBean, value);
+                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return demoJavaBean;
     }
 
     public static void main(String[] args) {
