@@ -1,9 +1,6 @@
 package com.github.hcsp.reflection;
 
-import com.sun.xml.internal.ws.api.model.CheckedException;
-
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
