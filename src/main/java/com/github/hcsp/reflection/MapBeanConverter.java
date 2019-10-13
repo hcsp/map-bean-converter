@@ -1,6 +1,6 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,28 +14,24 @@ public class MapBeanConverter {
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
         Class beanClass = bean.getClass();
-        Integer id = null;
-        try {
-            id = (Integer) beanClass.getMethod("getId").invoke(bean);
-        } catch (IllegalAccessException | RuntimeException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        String name = null;
-        try {
-            name = (String) beanClass.getMethod("getName").invoke(bean);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        boolean isLong = false;
-        try {
-            isLong = (boolean) beanClass.getMethod("isLongName").invoke(bean);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
+        Field[] fields = beanClass.getDeclaredFields();
         Map<String, Object> map = new HashMap<>();
-        map.put("id", id);
-        map.put("name", name);
-        map.put("longName", isLong);
+        Boolean islong = null;
+        try {
+            islong = (Boolean) beanClass.getMethod("isLongName").invoke(bean);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        for (int i = 0; i < fields.length; i++) {
+            fields[i].setAccessible(true);
+            String valueName = fields[i].getName();
+            try {
+                map.put(valueName, fields[i].get(bean));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        map.put("longName", islong);
         return map;
     }
 
@@ -50,26 +46,27 @@ public class MapBeanConverter {
         T demoJavaBean = null;
         try {
             demoJavaBean = klass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof String) {
-                try {
-                    klass.getMethod("setName", String.class).invoke(demoJavaBean, value);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    e.printStackTrace();
-                }
+                setBeanValue(klass, String.class, "setName", demoJavaBean, value);
             } else {
-                try {
-                    klass.getMethod("setId", Integer.class).invoke(demoJavaBean, value);
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    e.printStackTrace();
-                }
+                setBeanValue(klass, Integer.class, "setId", demoJavaBean, value);
             }
         }
         return demoJavaBean;
+    }
+
+    public static <T> T setBeanValue(Class<T> klass, Class type, String setXXX, T demoJavaBean, Object value) {
+        try {
+            klass.getMethod(setXXX, type).invoke(demoJavaBean, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static void main(String[] args) {
