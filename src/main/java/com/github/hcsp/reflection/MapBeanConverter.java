@@ -1,6 +1,6 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,25 +14,32 @@ public class MapBeanConverter {
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
         Class beanClass = bean.getClass();
-        Field[] fields = beanClass.getDeclaredFields();
         Map<String, Object> map = new HashMap<>();
-        Boolean islong = null;
-        try {
-            islong = (Boolean) beanClass.getMethod("isLongName").invoke(bean);
-        } catch (Exception e) {
-            e.printStackTrace();
+        Object value = null;
+        for (Method method : beanClass.getDeclaredMethods()) {
+            if (method.getName().startsWith("get")) {
+                helpBeantoMap(method, "get", value, bean, 3, map);
+            }
+            if (method.getName().startsWith("is")) {
+                helpBeantoMap(method, "is", value, bean, 2, map);
+            }
         }
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].setAccessible(true);
-            String valueName = fields[i].getName();
+        return map;
+    }
+
+    public static void helpBeantoMap(Method method,
+                                     String startWord,
+                                     Object value,
+                                     Object bean,
+                                     int subStringIndex, Map map) {
+        if (method.getName().startsWith(startWord)) {
             try {
-                map.put(valueName, fields[i].get(bean));
+                value = method.invoke(bean);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            map.put(method.getName().substring(subStringIndex), value);
         }
-        map.put("longName", islong);
-        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
