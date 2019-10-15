@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,29 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> result = new HashMap<>();
-        Class klass = bean.getClass();
-        Method[] methods = klass.getDeclaredMethods();
-        for (int i = 0; i < methods.length; i++) {
-            String methodName = methods[i].getName();
-            if (methodName.startsWith("get") || methodName.startsWith("is")) {
-                String fieldName = getBeanFieldByMethodName(methodName);
-                try {
-                    Object result2 = klass.getMethod(methodName).invoke(bean);
-                    result.put(fieldName, result2.getClass().cast(result2));
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                    e.printStackTrace();
-                    throw new ConversionException("beanToMap 发生异常 case by:" + fieldName, e);
-                }
-            }
-        }
-        return result;
-    }
-
-    private static String getBeanFieldByMethodName(String methodName) {
-        String tempName = methodName.substring(methodName.startsWith("get") ? 3 : 2);
-        String result = lowerCaseFirstLetter(tempName);
-        return result;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -46,36 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        Object obj;
-        try {
-            obj = klass.newInstance();
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                String key = entry.getKey();
-                Object value = entry.getValue();
-                Class valueClassType = value.getClass();
-                String methodName = "set" + upperCaseFirstLetter(key);
-                klass.getMethod(methodName, valueClassType).invoke(obj, entry.getValue());
-            }
-
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
-            throw new ConversionException("mapToBean发生异常 case by:" + map, e);
-        }
-        return klass.cast(obj);
-    }
-
-    private static class ConversionException extends RuntimeException {
-        ConversionException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
-
-    private static String upperCaseFirstLetter(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
-    }
-
-    private static String lowerCaseFirstLetter(String str) {
-        return str.substring(0, 1).toLowerCase() + str.substring(1);
+        return null;
     }
 
     public static void main(String[] args) {
