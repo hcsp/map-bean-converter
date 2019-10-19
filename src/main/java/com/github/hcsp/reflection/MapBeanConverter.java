@@ -1,19 +1,9 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MapBeanConverter {
-
-    static String replaceFirstToUpperCase(String str) {
-        return str.substring(0, 1).toUpperCase() + str.substring(1);
-    }
-
-    static String replaceFirstToLowerCase(String str) {
-        return str.substring(0, 1).toLowerCase() + str.substring(1);
-    }
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
     // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 应当返回一个Map { id -> 1, name -> "ABC", longName -> false }
@@ -22,25 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> result = new HashMap<>();
-        Class beanClass = bean.getClass();
-        Arrays.stream(beanClass.getDeclaredFields()).forEach(x -> {
-            try {
-                result.put(x.getName(), beanClass.getDeclaredMethod("get" + replaceFirstToUpperCase(x.getName())).invoke(bean));
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        });
-        Arrays.stream(beanClass.getDeclaredMethods())
-                .filter(x -> x.getName().startsWith("is"))
-                .forEach(x -> {
-                    try {
-                        result.put(replaceFirstToLowerCase(x.getName().substring(2)), x.invoke(bean));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-        return result;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -51,21 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        T t = null;
-        try {
-            t = klass.getDeclaredConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        T finalT = t;
-        map.forEach((key, val) -> {
-            try {
-                klass.getDeclaredMethod("set" + replaceFirstToUpperCase(key), val.getClass()).invoke(finalT, val);
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-        });
-        return t;
+        return null;
     }
 
     public static void main(String[] args) {
@@ -86,10 +44,6 @@ public class MapBeanConverter {
 
         public Integer getId() {
             return id;
-        }
-
-        DemoJavaBean() {
-
         }
 
         public void setId(Integer id) {
