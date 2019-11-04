@@ -66,7 +66,7 @@ public class MapBeanConverter {
                     klass.getMethod(methodName, klass.getDeclaredField(field).getType()).invoke(t, value);
                 } catch (IllegalAccessException | InvocationTargetException
                         | NoSuchMethodException | NoSuchFieldException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
                 }
             });
             return t;
