@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,27 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        HashMap<String, Object> map = new HashMap<String, Object>();
-        Method[] methods = bean.getClass().getDeclaredMethods();
-        for (Method method : methods) {
-            String methodName = method.getName();
-            String key = null;
-            if (methodName.startsWith("get")) {
-                key = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
-            }
-            if (methodName.startsWith("is")) {
-                key = methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
-            }
-            if (key != null) {
-                try {
-                    map.put(key, method.invoke(bean));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            System.out.println(map);
-        }
-        return map;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -44,23 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        Method[] methods = klass.getDeclaredMethods();
-        T result = null;
-        String key = null;
-        try {
-            result = klass.getDeclaredConstructor().newInstance();
-            for (Method method : methods) {
-                String methodName = method.getName();
-                if (methodName.startsWith("set")) {
-                    key = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
-                    Object value = map.get(key);
-                    method.invoke(result, value);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        return result;
+        return null;
     }
 
     public static void main(String[] args) {
