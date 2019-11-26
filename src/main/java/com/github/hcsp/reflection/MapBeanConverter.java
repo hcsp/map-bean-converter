@@ -13,8 +13,16 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+    public static Map<String, Object> beanToMap(Object bean) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", getInvoke(bean, "getId"));
+        map.put("name", getInvoke(bean, "getName"));
+        map.put("longName", getInvoke(bean, "isLongName"));
+        return map;
+    }
+
+    private static Object getInvoke(Object bean, String getId) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        return bean.getClass().getMethod(getId).invoke(bean);
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
