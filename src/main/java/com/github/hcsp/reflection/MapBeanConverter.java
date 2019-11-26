@@ -27,7 +27,7 @@ public class MapBeanConverter {
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
     // 传入参数DemoJavaBean.class和Map { id -> 1, name -> "ABC"}
-    // 应当返回一个DemoJavaBean对象 { id = 1, name = "ABC" }
+    // 应当返回一个DemoJavaBean对象 { id = 1, name = "ABC"}
     // 提示：
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
