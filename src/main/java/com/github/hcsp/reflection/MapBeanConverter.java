@@ -36,30 +36,34 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        T bean = klass.getDeclaredConstructor().newInstance();
-        map.forEach((key, value) -> {
-            Method method = null;
-            try {
-                method = klass.getDeclaredMethod("set" + key.substring(0, 1).toUpperCase() + key.substring(1), klass.getDeclaredField(key).getType());
-            } catch (NoSuchMethodException | NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
-            if (method == null) {
-                return;
-            }
-            try {
-                method.invoke(bean, value);
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        try {
+            T bean = klass.getDeclaredConstructor().newInstance();
+            map.forEach((key, value) -> {
+                Method method = null;
+                try {
+                    method = klass.getDeclaredMethod("set" + key.substring(0, 1).toUpperCase() + key.substring(1), klass.getDeclaredField(key).getType());
+                } catch (NoSuchMethodException | NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+                if (method == null) {
+                    return;
+                }
+                try {
+                    method.invoke(bean, value);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
 
-        });
+            });
 
-        return bean;
+            return bean;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public static void main(String[] args) {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
