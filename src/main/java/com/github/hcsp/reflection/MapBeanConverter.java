@@ -15,18 +15,25 @@ public class MapBeanConverter {
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> map = new HashMap<>();
-        map.put("id", getInvoke(bean, "getId"));
-        map.put("name", getInvoke(bean, "getName"));
-        map.put("longName", getInvoke(bean, "isLongName"));
-        return map;
-    }
-
-    private static Object getInvoke(Object bean, String str) {
-        try {
-            return bean.getClass().getMethod(str).invoke(bean);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+        Method[] methods = bean.getClass().getDeclaredMethods();
+        for (Method method : methods) {
+            String n = method.getName();
+            String k = null;
+            if (n.startsWith("get")) {
+                k = n.substring(3, 4).toLowerCase() + n.substring(4);
+            } else if (n.startsWith("is")) {
+                k = n.substring(2, 3).toLowerCase() + n.substring(3);
+            }
+            if (k != null) {
+                try {
+                    map.put(k, method.invoke(bean));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
+
+        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
