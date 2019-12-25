@@ -1,7 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,22 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> result = new HashMap<>();
-        Method[] methods = bean.getClass().getMethods();
-
-        for (Method method : methods) {
-            String methodName = method.getName();
-            if ((methodName.contains("get") || methodName.contains("is")) && method.getParameterCount() == 0) {
-                String filedName = methodName.contains("get") ? methodName.substring(3) : methodName.substring(2);
-                filedName = (new StringBuilder()).append(Character.toLowerCase(filedName.charAt(0))).append(filedName.substring(1)).toString();
-                try {
-                    result.put(filedName, method.invoke(bean));
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return result;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -40,28 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        T t = null;
-        try {
-            t = klass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        Method[] methods = klass.getMethods();
-        for (Method method : methods){
-            String methodName = method.getName();
-            if (methodName.contains("set") && method.getParameterCount()==1 ){
-                String filedName = methodName.substring(3);
-                filedName = (new StringBuilder()).append(Character.toLowerCase(filedName.charAt(0))).append(filedName.substring(1)).toString();
-                if (map.keySet().contains(filedName)){
-                    try {
-                        method.invoke(t, map.get(filedName));
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        return t;
+        return null;
     }
 
     public static void main(String[] args) {
