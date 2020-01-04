@@ -1,6 +1,10 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MapBeanConverter {
@@ -12,7 +16,28 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class classObj = bean.getClass();
+        Method[] methods = classObj.getDeclaredMethods();
+
+        Map<String, Object> javaBeanMap = new HashMap<>();
+        List<Method> methodList = Arrays.asList(methods);
+
+        methodList.forEach(method -> {
+            String methodName = method.getName();
+
+            try {
+                if (methodName.startsWith("get") || methodName.startsWith("is")) {
+                    Object fieldValue = method.invoke(bean);
+                    String fieldName = firstLetterLowercase(getFieldNameFromBeanMethod(methodName));
+                    javaBeanMap.put(fieldName, fieldValue);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        });
+        return javaBeanMap;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,10 +48,50 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T instance = null;
+        try {
+            instance = klass.getDeclaredConstructor().newInstance();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String fieldName = entry.getKey();
+                Object value = entry.getValue();
+                klass.getMethod(getJavaBeanMethodName(fieldName, "set"), value.getClass())
+                        .invoke(instance, value);
+            }
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        return instance;
     }
 
-    public static void main(String[] args) {
+    private static String firstLetterUppercase(String fieldName) {
+        return fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+    }
+
+    private static String firstLetterLowercase(String fieldName) {
+        return fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
+    }
+
+    private static String getJavaBeanMethodName(String fieldName, String fieldAction) {
+        return fieldAction + firstLetterUppercase(fieldName);
+    }
+
+    private static String getFieldNameFromBeanMethod(String methodName) {
+        if (methodName.startsWith("get") || methodName.startsWith("set")) {
+            return methodName.substring(3);
+        } else if (methodName.startsWith("is")) {
+            return methodName.substring(2);
+        } else {
+            throw new RuntimeException("method " + methodName + " is not Java Bean method");
+        }
+    }
+
+    public static void main(String[] args) throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
@@ -59,7 +124,7 @@ public class MapBeanConverter {
         }
 
         public boolean isLongName() {
-            return name.length() > 10;
+            return name != null && name.length() > 10;
         }
 
         @Override
