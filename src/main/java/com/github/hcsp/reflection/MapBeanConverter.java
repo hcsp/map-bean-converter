@@ -17,9 +17,12 @@ public class MapBeanConverter {
         Map<String, Object> map = new HashMap<>();
         Method[] methods = bean.getClass().getMethods();
         for (Method method : methods) {
-            if ( method.getParameterCount() == 0) {
+            String methodName = method.getName();
+            if ((methodName.contains("get") || methodName.contains("is")) && method.getParameterCount() == 0) {
                 try {
-                    map.put(method.getName(), method.invoke(bean));
+                    String fieldName = methodName.contains("get") ? methodName.substring(3) : methodName.substring(2);
+                    fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+                    map.put(fieldName, method.invoke(bean));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
@@ -36,7 +39,29 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T t = null;
+        try {
+            t = klass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        Method[] methods = klass.getMethods();
+        for (Method method : methods) {
+            String methodName = method.getName();
+            if (methodName.contains("set")) {
+                String fieldName = methodName.substring(3);
+                fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+
+                if (map.keySet().contains(fieldName)) {
+                    try {
+                        method.invoke(t, map.get(fieldName));
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return t;
     }
 
     public static void main(String[] args) {
