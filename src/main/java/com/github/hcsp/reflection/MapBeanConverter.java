@@ -1,5 +1,9 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +16,34 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            //对于 isXXX方法怎么处理？
+            Arrays.stream(bean.getClass().getMethods()).forEach((method->{
+                String methodName = method.getName();
+                if (methodName.startsWith("is")){
+                    String fieldName = methodName.substring(2);
+                    String name = (fieldName.charAt(0)+"").toLowerCase()+fieldName.substring(1);
+                    try {
+                        map.put(name, method.invoke(bean));
+                    } catch (InvocationTargetException | IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }));
+
+            for (Field field : bean.getClass().getDeclaredFields()){
+                String fieldName = field.getName();
+                String methodName = "get"+ (fieldName.charAt(0) + "").toUpperCase() + fieldName.substring(1);
+                Method method = bean.getClass().getDeclaredMethod(methodName);
+                Object value = method.invoke(bean);
+                map.put(field.getName(), value);
+            }
+            return map;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -22,8 +53,24 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map){
+        try {
+
+            T obj = klass.getDeclaredConstructor().newInstance();
+            Field[] fields = klass.getDeclaredFields();
+            for (Field field : fields){
+                String fieldName = field.getName();
+                Object value = map.get(fieldName);
+                String methodName = "set"+ (fieldName.charAt(0) + "").toUpperCase() + fieldName.substring(1);
+                Method method = klass.getDeclaredMethod(methodName, value.getClass());
+                method.invoke(obj, value);
+            }
+
+            return obj;
+
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {
