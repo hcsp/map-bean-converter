@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,24 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Object id = getFieldOfBean(bean, "getId");
-        Object name = getFieldOfBean(bean, "getName");
-        Object isLongName = getFieldOfBean(bean, "isLongName");
-        Map<String, Object> fieldsOfBean = new HashMap<>();
-        fieldsOfBean.put("id", id);
-        fieldsOfBean.put("name", name);
-        fieldsOfBean.put("longName", isLongName);
-        return fieldsOfBean;
-    }
-
-    private static Object getFieldOfBean(Object bean, String method) {
-        Object field = null;
-        try {
-            field = bean.getClass().getMethod(method).invoke(bean);
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        return field;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -41,25 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        Object id = map.get("id");
-        Object name = map.get("name");
-        T obj;
-        try {
-            obj = klass.getConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        setFieldOfBean(obj, "setId", id);
-        setFieldOfBean(obj, "setName", name);
-        return obj;
-    }
-
-    private static void setFieldOfBean(Object bean, String method, Object param) {
-        try {
-            bean.getClass().getMethod(method, param.getClass()).invoke(bean, param);
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        return null;
     }
 
     public static void main(String[] args) {
@@ -74,7 +38,7 @@ public class MapBeanConverter {
         System.out.println(mapToBean(DemoJavaBean.class, map));
     }
 
-    public static class DemoJavaBean {
+    static class DemoJavaBean {
         Integer id;
         String name;
 
