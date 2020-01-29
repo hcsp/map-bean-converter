@@ -29,6 +29,7 @@ public class MapBeanConverter {
                 String key = m.startsWith("get") ? m.substring(3).toLowerCase() : StringUtils.uncapitalize(m.substring(2));
                 result.put(key, bean.getClass().getMethod(m).invoke(bean));
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
                 throw new RuntimeException();
             }
         }
