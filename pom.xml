@@ -32,11 +32,6 @@
             <version>5.6.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -69,7 +64,7 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>8.28</version>
+                            <version>8.29</version>
                         </dependency>
                     </dependencies>
                 </plugin>
