@@ -20,8 +20,19 @@ public class MapBeanConverter {
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
         return Arrays.stream(bean.getClass().getDeclaredMethods())
-                .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is"))
+                .filter(MapBeanConverter::isGetterMethod)
                 .collect(Collectors.toMap(MapBeanConverter::getFieldNameFromMethod, method -> getFieldValue(method, bean)));
+    }
+
+    private static boolean isGetterMethod(Method method) {
+        String methodName = method.getName();
+
+        if (methodName.length() > 2) {
+            return methodName.startsWith("get") && Character.isUpperCase(methodName.charAt(3))
+                    || methodName.startsWith("is") && Character.isUpperCase(methodName.charAt(2));
+        }
+
+        return false;
     }
 
     private static Object getFieldValue(Method method, Object bean) {
