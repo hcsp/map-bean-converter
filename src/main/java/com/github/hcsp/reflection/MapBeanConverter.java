@@ -103,6 +103,10 @@ public class MapBeanConverter {
             return name.length() > 10;
         }
 
+        public boolean isoloate() {
+            return true;
+        }
+
         @Override
         public String toString() {
             return "DemoJavaBean{"
