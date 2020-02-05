@@ -26,13 +26,11 @@ public class MapBeanConverter {
 
     private static boolean isGetterMethod(Method method) {
         String methodName = method.getName();
+        return isGetterMethod(methodName, "get") || isGetterMethod(methodName, "is");
+    }
 
-        if (methodName.length() > 2) {
-            return methodName.startsWith("get") && Character.isUpperCase(methodName.charAt(3))
-                    || methodName.startsWith("is") && Character.isUpperCase(methodName.charAt(2));
-        }
-
-        return false;
+    static boolean isGetterMethod(String name, String getOrIs) {
+        return name.length() > getOrIs.length() && Character.isUpperCase(name.charAt(getOrIs.length()));
     }
 
     private static Object getFieldValue(Method method, Object bean) {
