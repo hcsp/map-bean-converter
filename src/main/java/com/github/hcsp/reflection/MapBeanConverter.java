@@ -30,7 +30,9 @@ public class MapBeanConverter {
     }
 
     static boolean isGetterMethod(String name, String getOrIs) {
-        return name.length() > getOrIs.length() && Character.isUpperCase(name.charAt(getOrIs.length()));
+        return name.startsWith(getOrIs)
+                && name.length() > getOrIs.length()
+                && Character.isUpperCase(name.charAt(getOrIs.length()));
     }
 
     private static Object getFieldValue(Method method, Object bean) {
@@ -110,10 +112,6 @@ public class MapBeanConverter {
 
         public boolean isLongName() {
             return name.length() > 10;
-        }
-
-        public boolean isoloate() {
-            return true;
         }
 
         @Override
