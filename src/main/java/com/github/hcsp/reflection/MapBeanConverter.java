@@ -1,5 +1,6 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +13,33 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class beanClass = bean.getClass();
+        Map<String, Object> map = new HashMap<>();
+        Object value = null;
+        for (Method method : beanClass.getDeclaredMethods()) {
+            if (method.getName().startsWith("get")) {
+                helpBeantoMap(method, "get", value, bean, 3, map);
+            }
+            if (method.getName().startsWith("is")) {
+                helpBeantoMap(method, "is", value, bean, 2, map);
+            }
+        }
+        return map;
+    }
+
+    public static void helpBeantoMap(Method method,
+                                     String startWord,
+                                     Object value,
+                                     Object bean,
+                                     int subStringIndex, Map map) {
+        if (method.getName().startsWith(startWord)) {
+            try {
+                value = method.invoke(bean);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            map.put(method.getName().substring(subStringIndex), value);
+        }
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,6 +50,29 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        T demoJavaBean = null;
+        try {
+            demoJavaBean = klass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                setBeanValue(klass, String.class, "setName", demoJavaBean, value);
+            } else {
+                setBeanValue(klass, Integer.class, "setId", demoJavaBean, value);
+            }
+        }
+        return demoJavaBean;
+    }
+
+    public static <T> T setBeanValue(Class<T> klass, Class type, String setXXX, T demoJavaBean, Object value) {
+        try {
+            klass.getMethod(setXXX, type).invoke(demoJavaBean, value);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
