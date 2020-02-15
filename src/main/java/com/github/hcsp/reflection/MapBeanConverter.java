@@ -18,7 +18,7 @@ public class MapBeanConverter {
     public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> map = new HashMap<>();
         try {
-            BeanInfo beanInfo = Introspector.getBeanInfo(DemoJavaBean.class, Object.class);
+            BeanInfo beanInfo = Introspector.getBeanInfo(bean.getClass(), Object.class);
             //获取所有的属性描述器
             PropertyDescriptor[] pds = beanInfo.getPropertyDescriptors();
             for (PropertyDescriptor pd : pds) {
