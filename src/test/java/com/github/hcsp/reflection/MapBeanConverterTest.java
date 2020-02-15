@@ -16,6 +16,7 @@ public class MapBeanConverterTest {
         Assertions.assertEquals(100, resultMap.get("id"));
         Assertions.assertEquals("BBBBBBBBBBBBB", resultMap.get("name"));
         Assertions.assertEquals(true, resultMap.get("longName"));
+        Assertions.assertNull(resultMap.get("olate"));
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", 456);
