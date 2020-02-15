@@ -38,9 +38,15 @@ public class MapBeanConverter {
         System.out.println(mapToBean(DemoJavaBean.class, map));
     }
 
-    static class DemoJavaBean {
-        Integer id;
-        String name;
+    public static class DemoJavaBean {
+        private Integer id;
+        private String name;
+        private String privateField = "privateField";
+
+        public int isolate() {
+            System.out.println(privateField);
+            return 0;
+        }
 
         public Integer getId() {
             return id;
@@ -52,6 +58,10 @@ public class MapBeanConverter {
 
         public String getName() {
             return name;
+        }
+
+        public String getName(int i) {
+            return name + i;
         }
 
         public void setName(String name) {
