@@ -113,8 +113,8 @@ public class MapBeanConverter {
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
         Object object = null;
         try {
-            //生成一个该对象的实例
-            object = klass.getConstructor().newInstance();
+            //生成一个该对象的实例,此处调用非public的构造方法
+            object = klass.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             e.printStackTrace();
         }
@@ -142,6 +142,7 @@ public class MapBeanConverter {
                 return method;
             }
         }
+        //如果未找到则返回null
         return null;
     }
 
@@ -160,9 +161,6 @@ public class MapBeanConverter {
     static class DemoJavaBean {
         Integer id;
         String name;
-
-        public DemoJavaBean() {
-        }
 
         public Integer getId() {
             return id;
