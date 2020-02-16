@@ -17,6 +17,7 @@ public class MapBeanConverter {
         Map<String, Object> results = new HashMap<>();
         Class clazz = bean.getClass();
         Method[] methods = clazz.getDeclaredMethods();
+
         for (Method method : methods) {
             String name = method.getName();
             if (name.startsWith("is") || name.startsWith("get")) {
