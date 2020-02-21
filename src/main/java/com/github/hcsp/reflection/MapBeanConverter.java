@@ -36,7 +36,7 @@ public class MapBeanConverter {
     }
 
 
-    // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
+    // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例；
     // 传入参数DemoJavaBean.class和Map { id -> 1, name -> "ABC"}
     // 应当返回一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 提示：
