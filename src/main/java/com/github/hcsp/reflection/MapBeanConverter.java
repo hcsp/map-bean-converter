@@ -1,5 +1,7 @@
 package com.github.hcsp.reflection;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,8 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(bean, Map.class);
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +26,8 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        return (T) objectMapper.convertValue(map, DemoJavaBean.class);
     }
 
     public static void main(String[] args) {
