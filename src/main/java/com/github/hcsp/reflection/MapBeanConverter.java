@@ -16,19 +16,23 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) throws IntrospectionException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+    public static Map<String, Object> beanToMap(Object bean) {
         Class<?> clazz = bean.getClass();
-        BeanInfo beanInfo = Introspector.getBeanInfo(clazz, Object.class);
-        PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+        Map<String, Object> beanMap = new HashMap<>();
 
-        // equivalent to : PropertyUtils.describe(bean);
-        Map<String, Object> beanMap  = new HashMap<>();
-        for (PropertyDescriptor prop : descriptors) {
-            String beanName = prop.getName();
-            Object beanValue = prop.getReadMethod().invoke(bean);
-            beanMap.put(beanName, beanValue);
+        try {
+            BeanInfo beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+
+            PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+            // equivalent to : PropertyUtils.describe(bean);
+            for (PropertyDescriptor prop : descriptors) {
+                String beanName = prop.getName();
+                Object beanValue = prop.getReadMethod().invoke(bean);
+                beanMap.put(beanName, beanValue);
+            }
+        } catch (IllegalAccessException | InvocationTargetException | IntrospectionException e) {
+            throw new RuntimeException(e);
         }
-
         return beanMap;
     }
 
@@ -39,19 +43,25 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws IntrospectionException, IllegalAccessException, InstantiationException, InvocationTargetException {
-        T beanObject = klass.newInstance();
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        T beanObject = null;
 
         // equivalent to : BeanUtils.populate(beanObject, map);
-        BeanInfo beanInfo = Introspector.getBeanInfo(klass, Object.class);
-        PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+        try {
+            beanObject = klass.newInstance();
 
-        for (PropertyDescriptor propertyDescriptor : descriptors) {
-            String propertyName = propertyDescriptor.getName();
-            if (map.containsKey(propertyName)) {
-                Object propertyValue = map.get(propertyName);
-                propertyDescriptor.getWriteMethod().invoke(beanObject, propertyValue);
+            BeanInfo beanInfo = Introspector.getBeanInfo(klass, Object.class);
+            PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
+
+            for (PropertyDescriptor propertyDescriptor : descriptors) {
+                String propertyName = propertyDescriptor.getName();
+                if (map.containsKey(propertyName)) {
+                    Object propertyValue = map.get(propertyName);
+                    propertyDescriptor.getWriteMethod().invoke(beanObject, propertyValue);
+                }
             }
+        } catch (InstantiationException | InvocationTargetException | IntrospectionException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
         return beanObject;
     }
