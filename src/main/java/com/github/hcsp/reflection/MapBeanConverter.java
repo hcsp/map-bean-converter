@@ -1,9 +1,11 @@
 package com.github.hcsp.reflection;
 
-import com.alibaba.fastjson.JSON;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+
 
 public class MapBeanConverter {
 
@@ -18,7 +20,23 @@ public class MapBeanConverter {
 
 
     public static Map<String, Object> beanToMap(Object bean) {
-        return (Map<String, Object>) JSON.toJSON(bean);
+        Map<String, Object> results = new HashMap<>();
+        Object value = null;
+        Method[] methods = bean.getClass().getDeclaredMethods();
+        for (Method method : methods) {
+            String name = method.getName();
+            if (name.startsWith("is") || name.startsWith("get")) {
+                try {
+                    value = method.invoke(bean);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+                String valueName = name.split("(is|get)")[1];
+                String key = Character.toLowerCase(valueName.charAt(0)) + valueName.substring(1);
+                results.put(key, value);
+            }
+        }
+        return results;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -29,9 +47,25 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {//创建一个需要转换类型的对象
-        return JSON.parseObject(JSON.toJSONString(map), klass);
+        T object;
+        try {
+            object = klass.getDeclaredConstructor().newInstance();
+            map.forEach((key, value) -> {
+                try {
+                    object.getClass().getMethod("set" + Character.toUpperCase(key.charAt(0)) + key.substring(1), value.getClass()).invoke(object, value);
+                } catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+            });
+            return object;
+        } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
     }
+
 
     public static void main(String[] args) {
         DemoJavaBean bean = new DemoJavaBean();
