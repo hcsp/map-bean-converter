@@ -1,14 +1,16 @@
 package com.github.hcsp.reflection;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MapBeanConverter {
+    private static final String METHOD_PREFIX_IS = "is";
+    private static final String METHOD_PREFIX_GET = "get";
+
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
     // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 应当返回一个Map { id -> 1, name -> "ABC", longName -> false }
@@ -19,20 +21,43 @@ public class MapBeanConverter {
     public static Map<String, Object> beanToMap(Object bean) {
         final Class<?> aClass = bean.getClass();
         final Method[] methods = aClass.getDeclaredMethods();
-        Map<String,Object> result = new HashMap<>();
-        final List<Method> methodList = Arrays.stream(methods)
-                .filter(method -> (method.getName().matches("get([A-Z])+") || method.getName().matches("is([A-Z])+"))
-                                    && method.getParameterCount() == 0
-                )
-                .collect(Collectors.toList());
+        Map<String, Object> result = new HashMap<>();
+        final List<Method> methodList = getGetterMethods(methods);
         methodList.forEach((method -> {
             try {
-                result.put(method.getName(),method.invoke(aClass));
+                final String key = method.getName();
+                result.put(GetMethodKeyWord(key), method.invoke(bean));
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
+                throw new RuntimeException(e);
             }
         }));
         return result;
+    }
+
+    private static String GetMethodKeyWord(String key) {
+        if (key.startsWith(METHOD_PREFIX_GET)) {
+            return formatKey((key.split(METHOD_PREFIX_GET)[1]));
+        } else {
+            if (key.startsWith(METHOD_PREFIX_IS)) {
+                return formatKey(key.split(METHOD_PREFIX_IS)[1]);
+            }
+        }
+        return null;
+    }
+
+    private static String formatKey(String string) {
+        char c[] = string.toCharArray();
+        c[0] = Character.toLowerCase(c[0]);
+        return new String(c);
+    }
+
+    private static List<Method> getGetterMethods(Method[] methods) {
+        return Arrays.stream(methods)
+                .filter(method -> (method.getName().matches("get[A-Z](\\w*)") || method.getName().matches("is[A-Z](\\w*)"))
+                        && method.getParameterCount() == 0
+                )
+                .collect(Collectors.toList());
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -43,7 +68,32 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        Map<String, Method> setterMethods = new HashMap<>();
+        map.forEach((key, value) -> getSetterMethod(klass, key, value, setterMethods));
+        final T t;
+        try {
+            t = klass.getConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        setterMethods.forEach((s, method) -> {
+            try {
+                method.invoke(t, map.get(s));
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        });
+        return t;
+    }
+
+    private static void getSetterMethod(Class klass, String key, Object value, Map<String, Method> setterMethods) {
+        final List<Method> methodList =
+                Arrays.stream(klass.getDeclaredMethods())
+                        .filter(method -> method.getName().matches("set" + StringUtils.capitalize(key)))
+                        .filter(method -> method.getParameterTypes()[0].equals(value.getClass()))
+                        .collect(Collectors.toList());
+        setterMethods.put(key, methodList.get(0));
     }
 
     public static void main(String[] args) {
