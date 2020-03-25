@@ -1,7 +1,12 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -12,7 +17,22 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        final Class<?> aClass = bean.getClass();
+        final Method[] methods = aClass.getDeclaredMethods();
+        Map<String,Object> result = new HashMap<>();
+        final List<Method> methodList = Arrays.stream(methods)
+                .filter(method -> (method.getName().matches("get([A-Z])+") || method.getName().matches("is([A-Z])+"))
+                                    && method.getParameterCount() == 0
+                )
+                .collect(Collectors.toList());
+        methodList.forEach((method -> {
+            try {
+                result.put(method.getName(),method.invoke(aClass));
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }));
+        return result;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
