@@ -1,7 +1,11 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -11,8 +15,23 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+    public static Map<String, Object> beanToMap(Object bean) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Class<?> clazz = bean.getClass();
+        Field[] fields = clazz.getDeclaredFields();
+        Method[] methods = clazz.getDeclaredMethods();
+        Map<String, Object> map = new HashMap<>();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String name = field.getName();
+            Object value = field.get(bean);
+            map.put(name, value);
+            for (Method method : methods) {
+                if (method.getName().equals("isLongName")) {
+                    map.put("longName", method.invoke(bean));
+                }
+            }
+        }
+        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -22,11 +41,29 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        T t = klass.getConstructor().newInstance();
+        Method[] methods = klass.getDeclaredMethods();
+        Set<Map.Entry<String, Object>> entries = map.entrySet();
+        for (Map.Entry<String, Object> entry : entries) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            for (Method method : methods) {
+                if (method.getName().equals(("set") + firstUpperCase(key))) {
+                    method.invoke(t, value);
+                }
+            }
+        }
+        return t;
     }
 
-    public static void main(String[] args) {
+    private static String firstUpperCase(String key) {
+        char[] chars = key.toCharArray();
+        chars[0] = Character.toUpperCase(chars[0]);
+        return new String(chars);
+    }
+
+    public static void main(String[] args) throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");

@@ -1,5 +1,6 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Assertions;
@@ -7,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 public class MapBeanConverterTest {
     @Test
-    public void test() {
+    public void test() throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         MapBeanConverter.DemoJavaBean bean = new MapBeanConverter.DemoJavaBean();
         bean.setId(100);
         bean.setName("BBBBBBBBBBBBB");
