@@ -1,7 +1,11 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -12,8 +16,38 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class<?> aClass = bean.getClass();
+        Method[] methods = aClass.getDeclaredMethods();
+        return Stream.of(methods).filter(MapBeanConverter::isGetterMethod)
+                .collect(Collectors.toMap(MapBeanConverter::getFieldName, method -> getFieldValue(bean, method)));
     }
+
+    public static boolean isGetterMethod(Method method) {
+        return (method.getName().startsWith("get") ||
+                method.getName().startsWith("is") && method.getReturnType() == boolean.class) &&
+                method.getParameterCount() == 0;
+    }
+
+    public static String getFieldName(Method method) {
+        String fieldName;
+        String methodName = method.getName();
+        if (methodName.startsWith("get")) {
+            fieldName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+        } else {
+            fieldName = methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
+        }
+        return fieldName;
+    }
+
+    public static Object getFieldValue(Object bean, Method method) {
+
+        try {
+            return method.invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
     // 传入参数DemoJavaBean.class和Map { id -> 1, name -> "ABC"}
@@ -23,7 +57,36 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+
+        try {
+            T t = klass.getConstructor().newInstance();
+            map.forEach((key, value) -> {
+                Method method = getSetMethod(key, value, klass);
+                setValue(method, value, t);
+
+            });
+            return t;
+        } catch (InstantiationException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private static <T> void setValue(Method method, Object value, T t) {
+        try {
+            method.invoke(t, value);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> Method getSetMethod(String key, Object value, Class<T> klass) {
+        try {
+            return klass.getDeclaredMethod("set" + key.substring(0, 1).toUpperCase() + key.substring(1),
+                    value.getClass());
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {
