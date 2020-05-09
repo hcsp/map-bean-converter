@@ -17,13 +17,22 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> map = new HashMap<>();
-        BeanInfo info = Introspector.getBeanInfo(bean.getClass());
+        BeanInfo info = null;
+        try {
+            info = Introspector.getBeanInfo(bean.getClass());
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
         for (PropertyDescriptor propertyDescriptor : info.getPropertyDescriptors()) {
             Method method = propertyDescriptor.getReadMethod();
             if (null != method) {
-                map.put(propertyDescriptor.getName(), method.invoke(bean));
+                try {
+                    map.put(propertyDescriptor.getName(), method.invoke(bean));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return map;
@@ -36,20 +45,34 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws NoSuchMethodException, IntrospectionException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        T instance = klass.getDeclaredConstructor().newInstance();
-        BeanInfo beanInfo = Introspector.getBeanInfo(klass);
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        T instance = null;
+        try {
+            instance = klass.getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        BeanInfo beanInfo = null;
+        try {
+            beanInfo = Introspector.getBeanInfo(klass);
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
         for (PropertyDescriptor propertyDescriptor : beanInfo.getPropertyDescriptors()) {
             String key = propertyDescriptor.getName();
             if (map.containsKey(key)) {
-                propertyDescriptor.getWriteMethod().invoke(instance, map.get(key));
+                try {
+                    propertyDescriptor.getWriteMethod().invoke(instance, map.get(key));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         return instance;
 
     }
 
-    public static void main(String[] args) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, IntrospectionException, InstantiationException {
+    public static void main(String[] args) {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
