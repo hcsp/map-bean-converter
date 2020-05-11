@@ -24,8 +24,8 @@ public class MapBeanConverter {
 
     private static boolean isGetter(Method method) {
         String methodName = method.getName();
-        return (methodName.startsWith("get") && methodName.length() > 3) ||
-                (methodName.startsWith("is") && methodName.length() > 2 && method.getReturnType() == boolean.class);
+        return (methodName.startsWith("get") && methodName.length() > 3)
+                || (methodName.startsWith("is") && methodName.length() > 2 && method.getReturnType() == boolean.class);
     }
 
     private static String getFieldName(Method method) {
