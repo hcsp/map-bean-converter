@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 public class MapBeanConverterTest {
     @Test
-    public void test() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public void test() {
         MapBeanConverter.DemoJavaBean bean = new MapBeanConverter.DemoJavaBean();
         bean.setId(100);
         bean.setName("BBBBBBBBBBBBB");
