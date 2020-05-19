@@ -1,10 +1,7 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -15,23 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> map = new HashMap<>();
-        Class<?> c = bean.getClass();
-        Method[] methods = c.getDeclaredMethods();
-        Stream.of(methods).filter(obj -> obj.getName().startsWith("get") || (obj.getName().startsWith("is") && obj.getReturnType() == boolean.class))
-                .filter(obj -> obj.getParameterCount() == 0)
-                .forEach(obj -> {
-                    try {
-                        if (obj.getName().startsWith("get")) {
-                            map.put(obj.getName().substring(3, 4).toLowerCase() + obj.getName().substring(4), obj.invoke(bean));
-                        } else if (obj.getName().startsWith("is")) {
-                            map.put(obj.getName().substring(2, 3).toLowerCase() + obj.getName().substring(3), obj.invoke(bean));
-                        }
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-        return map;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -42,20 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        T bean;
-        try {
-            bean = klass.getConstructor().newInstance();
-            map.forEach((s, o) -> {
-                try {
-                    klass.getMethod("set" + s.substring(0, 1).toUpperCase() + s.substring(1), o.getClass()).invoke(bean, o);
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-        return bean;
+        return null;
     }
 
     public static void main(String[] args) {
