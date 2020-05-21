@@ -17,10 +17,15 @@ public class MapBeanConverter {
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
-    public static Map<String, Object> beanToMap(Object bean) throws IntrospectionException, InvocationTargetException, IllegalAccessException {
+    public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> map = new HashMap<>();
         //获取JavaBean的描述器
-        BeanInfo b = Introspector.getBeanInfo(bean.getClass(), Object.class);
+        BeanInfo b = null;
+        try {
+            b = Introspector.getBeanInfo(bean.getClass(), Object.class);
+        } catch (IntrospectionException e) {
+            e.printStackTrace();
+        }
         //获取属性描述器
         PropertyDescriptor[] pds = b.getPropertyDescriptors();
         //对属性迭代
@@ -30,7 +35,14 @@ public class MapBeanConverter {
             //属性值,用getter方法获取
             Method m = pd.getReadMethod();
             //用对象执行getter方法获得属性值
-            Object properValue = m.invoke(bean);
+            Object properValue = null;
+            try {
+                properValue = m.invoke(bean);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
             //把属性名-属性值 存到Map中
             map.put(propertyName, properValue);
         }
@@ -44,19 +56,37 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) throws IllegalAccessException, InstantiationException, IntrospectionException, InvocationTargetException {
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
         //创建一个需要转换为的类型的对象
-        T obj = klass.newInstance();
+        T obj = null;
+        try {
+            obj = klass.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
         //从Map中获取和属性名称一样的值，把值设置给对象(setter方法)
         //得到属性的描述器
-        BeanInfo b = Introspector.getBeanInfo(klass, Object.class);
+        BeanInfo b = null;
+        try {
+            b = Introspector.getBeanInfo(klass, Object.class);
+        } catch (IntrospectionException e) {
+            e.printStackTrace();
+        }
         PropertyDescriptor[] pds = b.getPropertyDescriptors();
         for (PropertyDescriptor pd : pds) {
             //得到属性的setter方法
             Method setter = pd.getWriteMethod();
             //得到key名字和属性名字相同的value设置给属性
             if (setter != null) {
-                setter.invoke(obj, map.get(pd.getName()));
+                try {
+                    setter.invoke(obj, map.get(pd.getName()));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return obj;
