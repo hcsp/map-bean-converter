@@ -1,9 +1,7 @@
 package com.github.hcsp.reflection;
 
-import java.beans.IntrospectionException;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,21 +17,33 @@ public class MapBeanConverter {
 
         Map<String, Object> result = new HashMap<>();
         Class klass = bean.getClass();
-        Field[] fields = klass.getDeclaredFields();
 
-        for (Field f : fields) {
-            PropertyDescriptor pd;
-            try {
-                pd = new PropertyDescriptor(f.getName(), klass);
-            } catch (IntrospectionException e) {
-                continue;
-            }
-            try {
-                result.put(f.getName(), pd.getReadMethod().invoke(bean));
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
+        Arrays.stream(klass.getDeclaredMethods())
+                .filter(m -> {
+                    StringBuilder name = new StringBuilder(m.getName()); // 使用 StringBuilder 防止待会CharAt时数组越界
+                    // 过滤有参方法
+                    if (m.getParameters().length != 0) {
+                        return false;
+                    }
+                    // 过滤非 get 或 is 开头, 并且其后跟随非大写字母的方法
+                    if (name.toString().startsWith("get") || name.toString().startsWith("is")) {
+                        return Character.isUpperCase(name.charAt(name.toString().startsWith("get") ? 3 : 2));
+                    } else {
+                        return false;
+                    }
+                })
+                .forEach(m -> {
+                    String name = m.getName();
+                    String roughName = name.substring(name.startsWith("get") ? 3 : 2);
+                    try {
+                        result.put(
+                                Character.toLowerCase(roughName.charAt(0)) + roughName.substring(1),
+                                m.invoke(bean)
+                        );
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                });
 
         return result;
     }
@@ -56,19 +66,13 @@ public class MapBeanConverter {
 
         T finalResult = result;
         map.forEach((name, value) -> {
-            // 方法1: 使用PropertyDescriptor获取setter
+            // 方法2: 使用反射获取setter
+            String methodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
             try {
-                PropertyDescriptor pd = new PropertyDescriptor(name, klass);
-                pd.getWriteMethod().invoke(finalResult, value);
-            } catch (IntrospectionException | IllegalAccessException | InvocationTargetException e) {
+                klass.getMethod(methodName, value.getClass()).invoke(finalResult, value);
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
-
-//            // 方法2: 使用反射获取setter
-//            String methodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
-//            try {
-//                klass.getMethod(methodName, value.getClass()).invoke(result, value);
-//            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {}
         });
 
         return result;
