@@ -1,7 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,38 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-
-        Map<String, Object> result = new HashMap<>();
-        Class klass = bean.getClass();
-
-        Arrays.stream(klass.getDeclaredMethods())
-                .filter(m -> {
-                    StringBuilder name = new StringBuilder(m.getName()); // 使用 StringBuilder 防止待会CharAt时数组越界
-                    // 过滤有参方法
-                    if (m.getParameters().length != 0) {
-                        return false;
-                    }
-                    // 过滤非 get 或 is 开头, 并且其后跟随非大写字母的方法
-                    if (name.toString().startsWith("get") || name.toString().startsWith("is")) {
-                        return Character.isUpperCase(name.charAt(name.toString().startsWith("get") ? 3 : 2));
-                    } else {
-                        return false;
-                    }
-                })
-                .forEach(m -> {
-                    String name = m.getName();
-                    String roughName = name.substring(name.startsWith("get") ? 3 : 2);
-                    try {
-                        result.put(
-                                Character.toLowerCase(roughName.charAt(0)) + roughName.substring(1),
-                                m.invoke(bean)
-                        );
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-        return result;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -56,29 +23,10 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-
-        T result = null;
-        try {
-            result = klass.getConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-
-        T finalResult = result;
-        map.forEach((name, value) -> {
-            // 方法2: 使用反射获取setter
-            String methodName = "set" + name.substring(0, 1).toUpperCase() + name.substring(1);
-            try {
-                klass.getMethod(methodName, value.getClass()).invoke(finalResult, value);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        });
-
-        return result;
+        return null;
     }
 
-    public static void main(String[] args) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+    public static void main(String[] args) {
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
