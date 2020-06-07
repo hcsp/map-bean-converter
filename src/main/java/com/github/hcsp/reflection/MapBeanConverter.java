@@ -3,7 +3,6 @@ package com.github.hcsp.reflection;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -20,8 +19,7 @@ public class MapBeanConverter {
   public static Map<String, Object> beanToMap(Object bean) {
     HashMap<String, Object> map = new HashMap();
     try {
-      for (PropertyDescriptor descriptor :
-          Introspector.getBeanInfo(bean.getClass(), Object.class).getPropertyDescriptors()) {
+      for (PropertyDescriptor descriptor : Introspector.getBeanInfo(bean.getClass(), Object.class).getPropertyDescriptors()) {
 
         map.put(descriptor.getDisplayName(), descriptor.getReadMethod().invoke(bean));
       }
