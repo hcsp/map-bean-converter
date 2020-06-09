@@ -1,5 +1,9 @@
 package com.github.hcsp.reflection;
 
+import org.apache.commons.lang.StringUtils;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +16,38 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class<?> klass = bean.getClass();
+        Method[] declaredMethods = klass.getDeclaredMethods();
+        HashMap<String, Object> map = new HashMap<>();
+        for (Method declaredMethod : declaredMethods) {
+            String name = declaredMethod.getName();
+            if (!isAttributeMethod(declaredMethod)) {
+                continue;
+            }
+            try {
+                addMethodReturnToMap(bean, map, declaredMethod, name, "get");
+                addMethodReturnToMap(bean, map, declaredMethod, name, "is");
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return map;
+    }
+
+    private static boolean isAttributeMethod(Method method) {
+        return (method != null && method.getParameterCount() == 0 && method.getReturnType() != void.class);
+    }
+
+    private static void addMethodReturnToMap(Object bean, HashMap<String, Object> map, Method declaredMethod, String name, String word) throws IllegalAccessException, InvocationTargetException {
+        if (name.startsWith(word)) {
+            String subName = name.substring(word.length());
+            if (!Character.isUpperCase(subName.charAt(0))) {
+                return;
+            }
+            String key = StringUtils.uncapitalize(subName);
+            Object value = declaredMethod.invoke(bean);
+            map.put(key, value);
+        }
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +58,17 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        try {
+            T t = klass.getConstructor().newInstance();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String key = StringUtils.capitalize(entry.getKey());
+                key = "set" + key;
+                klass.getMethod(key, entry.getValue().getClass()).invoke(t, entry.getValue());
+            }
+            return t;
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) {
