@@ -4,8 +4,10 @@ import org.apache.commons.lang.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -18,35 +20,32 @@ public class MapBeanConverter {
     public static Map<String, Object> beanToMap(Object bean) {
         Class<?> klass = bean.getClass();
         Method[] declaredMethods = klass.getDeclaredMethods();
-        HashMap<String, Object> map = new HashMap<>();
-        for (Method declaredMethod : declaredMethods) {
-            String name = declaredMethod.getName();
-            if (!isAttributeMethod(declaredMethod)) {
-                continue;
-            }
-            try {
-                addMethodReturnToMap(bean, map, declaredMethod, name, "get");
-                addMethodReturnToMap(bean, map, declaredMethod, name, "is");
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return map;
+        return Arrays.stream(declaredMethods)
+                .filter(MapBeanConverter::isAttributeMethod)
+                .collect(Collectors.toMap(MapBeanConverter::getKey, method -> getValue(bean, method)));
+
     }
 
     private static boolean isAttributeMethod(Method method) {
-        return (method != null && method.getParameterCount() == 0 && method.getReturnType() != void.class);
+        return (method != null && method.getParameterCount() == 0 && method.getReturnType() != void.class)
+                && (isStartWithWord(method.getName(), "get") || isStartWithWord(method.getName(), "is"));
     }
 
-    private static void addMethodReturnToMap(Object bean, HashMap<String, Object> map, Method declaredMethod, String name, String word) throws IllegalAccessException, InvocationTargetException {
-        if (name.startsWith(word)) {
-            String subName = name.substring(word.length());
-            if (!Character.isUpperCase(subName.charAt(0))) {
-                return;
-            }
-            String key = StringUtils.uncapitalize(subName);
-            Object value = declaredMethod.invoke(bean);
-            map.put(key, value);
+    private static boolean isStartWithWord(String name, String word) {
+        return name.startsWith(word) && Character.isUpperCase(name.substring(word.length()).charAt(0));
+    }
+
+    private static String getKey(Method method) {
+        String name = method.getName();
+        name = name.startsWith("get") ? name.substring(3) : name.substring(2);
+        return StringUtils.uncapitalize(name);
+    }
+
+    private static Object getValue(Object object, Method method) {
+        try {
+            return method.invoke(object);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -60,13 +59,20 @@ public class MapBeanConverter {
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
         try {
             T t = klass.getConstructor().newInstance();
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                String key = StringUtils.capitalize(entry.getKey());
-                key = "set" + key;
-                klass.getMethod(key, entry.getValue().getClass()).invoke(t, entry.getValue());
-            }
+
+            map.entrySet().forEach(entry -> getMethod(klass, t, entry));
             return t;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <T> void getMethod(Class<T> klass, T t, Map.Entry<String, Object> entry) {
+        String key = StringUtils.capitalize(entry.getKey());
+        key = "set" + key;
+        try {
+            klass.getMethod(key, entry.getValue().getClass()).invoke(t, entry.getValue());
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
