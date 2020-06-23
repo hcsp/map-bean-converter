@@ -48,6 +48,10 @@ public class MapBeanConverter {
             return 0;
         }
 
+        public String is() {
+            return "";
+        }
+
         public Integer getId() {
             return id;
         }
