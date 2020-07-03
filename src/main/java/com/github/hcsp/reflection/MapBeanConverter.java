@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,32 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Method[] declaredMethods = bean.getClass().getDeclaredMethods();
-        int i = 0;
-        Map<String, Object> map = new HashMap<>();
-        for (Method m : declaredMethods) {
-            try {
-                if (MapBeanConverter.isBeanName(m)) {
-                    String methodName = m.getName();
-                    String key = methodName.substring(methodName.startsWith("get") ? 3 : 2);
-                    Object invoke = m.invoke(bean);
-                    map.put(Character.toLowerCase(key.charAt(0)) + key.substring(1), invoke);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return map;
-    }
-
-    private static boolean isBeanName(Method method) {
-        String methodName = method.getName();
-        boolean isStartWithGet = methodName.startsWith("get") && methodName.length() > 3;
-        boolean isStartWithIs = methodName.startsWith("is") && methodName.length() > 2;
-        if ((isStartWithGet || isStartWithIs) && method.getParameterCount() == 0) {
-            return Character.isUpperCase(methodName.charAt(isStartWithGet ? 3 : 2));
-        }
-        return false;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -49,20 +23,6 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            T t = klass.getConstructor().newInstance();
-            map.forEach((key, value) -> {
-                String methodName = "set" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
-                try {
-                    klass.getMethod(methodName, value.getClass()).invoke(t, value);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-            return t;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return null;
     }
 
