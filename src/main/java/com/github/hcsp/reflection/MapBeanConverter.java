@@ -70,7 +70,7 @@ public class MapBeanConverter {
             String methodName = method.getName();
             if (methodName.startsWith("set")) {
                 try {
-                    method.invoke(klass, map.get(Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4)));
+                    method.invoke(t, map.get(Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4)));
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     e.printStackTrace();
                 }
