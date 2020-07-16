@@ -1,75 +1,18 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class MapBeanConverter {
-    static String captureName(String name) {
-        char[] cs = name.toCharArray();
-        cs[0] += 32;
-        return String.valueOf(cs);
-    }
-
-    static boolean isBeanSetter(String methodName) {
-        if (methodName.equals("getClass")) {
-            return false;
-        }
-        if (methodName.startsWith("set")) {
-            return methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
-        }
-        return false;
-    }
-    static boolean isBeanGetter(String methodName) {
-        if (methodName.equals("getClass")) {
-            return false;
-        }
-        if (methodName.startsWith("get")) {
-            return methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
-        }
-        if (methodName.startsWith("is")) {
-            return methodName.length() > 2 && Character.isUpperCase(methodName.charAt(2));
-        }
-        return false;
-    }
-
-    static String getFieldName(String methodName) {
-        String sub = methodName;
-        if (methodName.startsWith("get") | methodName.startsWith("set") ) {
-            sub = methodName.substring(3);
-        }
-        if (methodName.startsWith("is")) {
-            sub = methodName.substring(2);
-        }
-        return captureName(sub);
-    }
-
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
-    // 例如，对于一个DemoJavaBean对象 { id = 1, captureName(sub);name = "ABC" }
+    // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 应当返回一个Map { id -> 1, name -> "ABC", longName -> false }
     // 提示：
     //  1. 读取传入参数bean的Class
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Class<?> klass = bean.getClass();
-        Method[] methods = klass.getMethods();
-        List<Method> methodList = Stream.of(methods)
-                .filter(method -> isBeanGetter(method.getName()) && method.getParameterCount() == 0)
-                .collect(Collectors.toList());
-        Map<String, Object> map = new HashMap<>();
-        for (Method method : methodList) {
-            try {
-                map.put(getFieldName(method.getName()), method.invoke(bean));
-            } catch (IllegalAccessException | InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
-        return map;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -79,30 +22,8 @@ public class MapBeanConverter {
     //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
-    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map)  {
-        Method[] methods = klass.getMethods();
-        Object instance = new Object();
-        try {
-            instance = klass.getConstructor().newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        List<Method> methodList = Stream.of(methods)
-                .filter(method -> isBeanSetter(method.getName()))
-                .collect(Collectors.toList());
-        for (Method method : methodList) {
-            Class<?>[] parameterTypes = method.getParameterTypes();
-            String fieldName = getFieldName(method.getName());
-            Object value = map.get(fieldName);
-            if (value != null && value.getClass() == parameterTypes[0]) {
-                try {
-                    method.invoke(instance, value);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return (T) instance;
+    public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        return null;
     }
 
     public static void main(String[] args) {
