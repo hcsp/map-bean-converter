@@ -86,7 +86,7 @@ public class MapBeanConverter {
     }
 
     static boolean isBeanSetter(String methodName) {
-        if (!methodName.equals("getClass") && methodName.startsWith("set")) {
+        if (!methodName.startsWith("getClass") && methodName.startsWith("set")) {
             return methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
         }
         return false;
