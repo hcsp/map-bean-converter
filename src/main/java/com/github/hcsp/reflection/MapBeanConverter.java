@@ -76,10 +76,7 @@ public class MapBeanConverter {
     }
 
     private static boolean isBeanGetter(String name) {
-        if (name.equals("getClass")) {
-            return false;
-        }
-        if (name.startsWith("get")) {
+        if (!name.startsWith("getClass") && name.startsWith("get")) {
             return name.length() > 3;
         }
         if (name.startsWith("is")) {
@@ -89,10 +86,7 @@ public class MapBeanConverter {
     }
 
     static boolean isBeanSetter(String methodName) {
-        if (methodName.equals("getClass")) {
-            return false;
-        }
-        if (methodName.startsWith("set")) {
+        if (!methodName.equals("getClass") && methodName.startsWith("set")) {
             return methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
         }
         return false;
