@@ -1,9 +1,14 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class MapBeanConverter {
+
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
     // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 应当返回一个Map { id -> 1, name -> "ABC", longName -> false }
@@ -12,7 +17,11 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Map<String, Object> map = new HashMap<>();
+        Arrays.stream(bean.getClass().getMethods())
+                .filter(MapBeanConverter::getGetterMethod)
+                .forEach(invokeMethodGetValue(bean, map));
+        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +32,76 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
+        try {
+            T instance = klass.newInstance();
+            Arrays.stream(klass.getMethods()).filter(method -> filterKlass(method, map))
+                    .forEach(invokeMethodGetValue(instance, map));
+            return instance;
+        } catch (InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
         return null;
+    }
+
+    private static Consumer<? super Method> invokeMethodGetValue(Object bean, Map<String, Object> map) {
+        return method -> {
+            try {
+                if (isBeanGetter(method.getName())) {
+                    map.put(getFieldName(method.getName()), method.invoke(bean));
+                }
+                if (isBeanSetter(method.getName())) {
+                    method.invoke(bean, map.get(getFieldName(method.getName())));
+                }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        };
+    }
+
+    private static String getFieldName(String name) {
+        String key = "";
+        if (name.startsWith("get") || name.startsWith("set")) {
+            key = name.substring(3);
+        }
+        if (name.startsWith("is")) {
+            key = name.substring(2);
+        }
+        return lowerCase(key);
+    }
+
+    private static String lowerCase(String key) {
+        char[] chars = key.toCharArray();
+        chars[0] += 32;
+        return String.valueOf(chars);
+    }
+
+    private static boolean isBeanGetter(String name) {
+        if (!name.startsWith("getClass") && name.startsWith("get")) {
+            return name.length() > 3;
+        }
+        if (name.startsWith("is")) {
+            return name.length() > 2 && Character.isUpperCase(name.charAt(2));
+        }
+        return false;
+    }
+
+    static boolean isBeanSetter(String methodName) {
+        if (!methodName.startsWith("getClass") && methodName.startsWith("set")) {
+            return methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
+        }
+        return false;
+    }
+
+    private static boolean getGetterMethod(Method method) {
+        return isBeanGetter(method.getName()) && method.getParameterCount() == 0;
+    }
+
+    private static boolean filterKlass(Method method, Map<String, Object> map) {
+        return isBeanSetter(method.getName()) && isSameClass(method, map);
+    }
+
+    private static boolean isSameClass(Method method, Map<String, Object> map) {
+        return map.get(getFieldName(method.getName())).getClass() == method.getParameterTypes()[0];
     }
 
     public static void main(String[] args) {
@@ -42,6 +120,7 @@ public class MapBeanConverter {
         private Integer id;
         private String name;
         private String privateField = "privateField";
+
 
         public int isolate() {
             System.out.println(privateField);
