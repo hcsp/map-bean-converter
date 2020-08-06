@@ -1,7 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,34 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Method[] methods = bean.getClass().getMethods();
-        Map<String, Object> map = new HashMap<>();
-        for (Method method : methods) {
-            String name = method.getName();
-            // 以get开头，并且无参
-            if (name.startsWith("get") && method.getParameterCount() == 0) {
-                String s = name.substring(3).toLowerCase();
-                try {
-                    map.put(s, method.invoke(bean));
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (name.startsWith("is") && method.getName().length() > 2) {
-                String s = name.substring(2).substring(0, 1).toLowerCase() + name.substring(3);
-                try {
-                    if (s.equals("olate")) {
-                        map.put(s, null);
-                    } else {
-                        map.put(s, method.invoke(bean));
-                    }
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        System.out.println(map);
-        return map;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -52,20 +23,6 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            T t = klass.getConstructor().newInstance();
-            map.forEach((key, value) -> {
-                String methodName = "set" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
-                try {
-                    klass.getMethod(methodName, value.getClass()).invoke(t, value);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
-            return t;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return null;
     }
 
