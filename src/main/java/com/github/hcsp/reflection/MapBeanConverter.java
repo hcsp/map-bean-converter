@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,42 +12,18 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> map = new HashMap<>();
-        try {
-            Object id = bean.getClass().getMethod("getId").invoke(bean);
-            Object name = bean.getClass().getMethod("getName").invoke(bean);
-            Object longName = bean.getClass().getMethod("isLongName").invoke(bean);
-            map.put("id", id);
-            map.put("name", name);
-            map.put("longName", longName);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } finally {
-            return map;
-        }
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
     // 传入参数DemoJavaBean.class和Map { id -> 1, name -> "ABC"}
     // 应当返回一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 提示：
-    //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法） //  2. 使用反射创建klass对象的一个实例
+    //  1. 遍历map中的所有键值对，寻找klass中名为setXXX，且参数为对应值类型的方法（即setter方法）
+    //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            T obj = klass.getConstructor().newInstance();
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                if ("id".equals(entry.getKey())) {
-                    klass.getMethod("setId", Integer.class).invoke(obj, (Integer) entry.getValue());
-                }
-                if ("name".equals(entry.getKey())) {
-                    klass.getMethod("setName", String.class).invoke(obj, (String) entry.getValue());
-                }
-            }
-            return obj;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return null;
     }
 
     public static void main(String[] args) {
