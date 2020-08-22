@@ -1,6 +1,6 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,17 +15,26 @@ public class MapBeanConverter {
     public static Map<String, Object> beanToMap(Object bean) {
         Map<String, Object> map = new HashMap<>();
         try {
-            Object id = bean.getClass().getMethod("getId").invoke(bean);
-            Object name = bean.getClass().getMethod("getName").invoke(bean);
-            Object longName = bean.getClass().getMethod("isLongName").invoke(bean);
-            map.put("id", id);
-            map.put("name", name);
-            map.put("longName", longName);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            Method[] methods = bean.getClass().getDeclaredMethods();
+            for (Method method : methods) {
+                String name = method.getName();
+                if (isGetter(method, name)) {
+                    String methodName = name.substring(3).toLowerCase();
+                    map.put(methodName, method.invoke(bean));
+                }
+                if (isGetter(method, name)) {
+                    String methodName = name.substring(2).substring(0, 1).toLowerCase() + name.substring(3);
+                    map.put(methodName, method.invoke(bean));
+                }
+            }
         } finally {
             return map;
         }
+    }
+
+    private static boolean isGetter(Method method, String name) {
+        return (name.startsWith("get") && method.getParameterCount() == 0)
+                || (name.length() > 2 && (name.startsWith("is") && Character.isUpperCase(name.charAt(2))));
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -37,18 +46,22 @@ public class MapBeanConverter {
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
         try {
             T obj = klass.getConstructor().newInstance();
+            Method[] methods = klass.getMethods();
             for (Map.Entry<String, Object> entry : map.entrySet()) {
-                if ("id".equals(entry.getKey())) {
-                    klass.getMethod("setId", Integer.class).invoke(obj, (Integer) entry.getValue());
-                }
-                if ("name".equals(entry.getKey())) {
-                    klass.getMethod("setName", String.class).invoke(obj, (String) entry.getValue());
+                for (Method method : methods) {
+                    if (isSetter(entry, method)) {
+                        method.invoke(obj, entry.getValue());
+                    }
                 }
             }
             return obj;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static boolean isSetter(Map.Entry<String, Object> entry, Method method) {
+        return method.getName().startsWith("set" + entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1));
     }
 
     public static void main(String[] args) {
