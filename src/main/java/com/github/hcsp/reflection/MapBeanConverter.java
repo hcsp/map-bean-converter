@@ -1,7 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,32 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> map = new HashMap<>();
-        String className = bean.getClass().getName();
-        try {
-            Method[] methods = Class.forName(className).getMethods();
-            for (Method method : methods) {
-                if (isBeanMethod(method)) {
-                    String key = method.getName().substring(method.getName().startsWith("get") ? 3 : 2);
-                    String mapKey = Character.toLowerCase(key.charAt(0)) + key.substring(1);
-                    map.put(mapKey, method.invoke(bean));
-                }
-            }
-
-        } catch (ClassNotFoundException | InvocationTargetException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return map;
-    }
-
-    private static boolean isBeanMethod(Method method) {
-        String methodName = method.getName();
-        boolean isStartWithGet = methodName.startsWith("get") && methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3));
-        boolean isStartWithIs = methodName.startsWith("is") && methodName.length() > 2 && Character.isUpperCase(methodName.charAt(2));
-        if ((isStartWithGet || isStartWithIs) && method.getParameterCount() == 0) {
-            return true;
-        }
-        return false;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -50,26 +23,10 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            Object obj = klass.getConstructor().newInstance();
-            map.forEach((key, value) -> {
-                String setBeanMethodName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
-                try {
-                    klass.getMethod(setBeanMethodName, value.getClass()).invoke(obj, value);
-                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            });
-            return (T) obj;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
         return null;
     }
 
     public static void main(String[] args) {
-        String str = "getLongName";
-        System.out.println(str.substring(2).substring(0, 1).toLowerCase() + str.substring(3));
         DemoJavaBean bean = new DemoJavaBean();
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
