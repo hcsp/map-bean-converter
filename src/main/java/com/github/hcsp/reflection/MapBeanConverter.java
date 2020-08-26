@@ -38,7 +38,7 @@ public class MapBeanConverter {
                 if (beanField.equals(methodName)) {
                     beanIntoMap(bean, map, c, beanField, declaredField.getName());
                 }
-                if (methodName.equals("isLongName")) {
+                if ("isLongName".equals(methodName)) {
                     beanIntoMap(bean, map, c, methodName, "longName");
                 }
             }
