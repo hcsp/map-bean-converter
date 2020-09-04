@@ -1,6 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
