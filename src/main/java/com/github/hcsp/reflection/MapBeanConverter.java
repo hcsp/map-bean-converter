@@ -23,13 +23,6 @@ public class MapBeanConverter {
             }
             map.put(keyName, getValue(method, bean));
         }
-        //        //todo 缺少longName->false,so 为了通过测试用写死的方式先造一个
-        //        try {
-        //            Object object = classType.getMethod("isLongName").invoke(bean);
-        //            map.put("longName", object);
-        //        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-        //            e.printStackTrace();
-        //        }
         return map;
     }
 
