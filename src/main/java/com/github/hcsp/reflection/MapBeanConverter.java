@@ -44,9 +44,9 @@ public class MapBeanConverter {
         if (method.getName().startsWith("is")) {
             result = method.getName().substring(2);
         }
-        return result != null && !"".equals(result) ?
-                String.valueOf(result.charAt(0)).toLowerCase() + result.substring(1) :
-                null;
+        return result != null && !"".equals(result)
+                ? String.valueOf(result.charAt(0)).toLowerCase() + result.substring(1)
+                : null;
     }
 
     private static Object getValue(Method method, Object bean) {
@@ -87,9 +87,9 @@ public class MapBeanConverter {
     }
 
     public static Method getMethod(Class klass, String filedName, Object value) {
-        filedName = "set" + String.valueOf(filedName.charAt(0)).toUpperCase() + filedName.substring(1);
+        String methodName = "set" + String.valueOf(filedName.charAt(0)).toUpperCase() + filedName.substring(1);
         try {
-            return klass.getMethod(filedName, value.getClass());
+            return klass.getMethod(methodName, value.getClass());
         } catch (Exception e) {
             e.printStackTrace();
         }
