@@ -1,5 +1,7 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,46 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Map<String, Object> result = new HashMap<>();
+        Map<String, Method> methodMap = methodsToMap(bean.getClass().getDeclaredMethods(), 0);
+        methodMap.forEach((k, v) -> setMap(k, v, bean, result));
+        return result;
+    }
+
+    private static void setMap(String methodName, Method method, Object bean, Map<String, Object> result) {
+        try {
+            if (methodName.startsWith("get")) {
+                if (methodName.length() < 4 || !Character.isUpperCase(methodName.charAt(3))) {
+                    return;
+                }
+                String field = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
+                Object obj = method.invoke(bean);
+                result.put(field, obj);
+            } else if (methodName.startsWith("is")) {
+                if (methodName.length() < 3 || !Character.isUpperCase(methodName.charAt(2))) {
+                    return;
+                }
+                String field = methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
+                Object obj = method.invoke(bean);
+                result.put(field, obj);
+            }
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Map<String, Method> methodsToMap(Method[] methods, int length) {
+        Map<String, Method> methodMap = new HashMap<>();
+        for (Method method : methods) {
+            if (method.getParameterTypes().length == length) {
+                methodMap.put(method.getName(), method);
+            }
+        }
+        return methodMap;
+    }
+
+    private static String restore(String split, String fieldName) {
+        return split + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +64,21 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T obj = null;
+        try {
+            obj = klass.newInstance();
+            Map<String, Method> methodMap = methodsToMap(klass.getDeclaredMethods(), 1);
+            for (String field : map.keySet()) {
+                Method method = methodMap.get(restore("set", field));
+                if (method != null) {
+                    method.invoke(obj, map.get(field));
+                }
+            }
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        return obj;
     }
 
     public static void main(String[] args) {
