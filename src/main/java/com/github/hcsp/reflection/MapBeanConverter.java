@@ -1,5 +1,7 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,29 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Map<String, Object> params = new HashMap<>();
+        //获取JavaBean的所有方法进行筛选
+        Class<?> executeClass = bean.getClass();
+        Method[] methods = getMethods(executeClass);
+        try {
+            for (Method method : methods) {
+                String methodName = method.getName();
+                if (methodName.startsWith("get")) {
+                    params.put(methodName.substring(3, 4).toLowerCase() + methodName.substring(4),
+                            executeClass.getMethod(methodName).invoke(bean));
+                }
+                if (methodName.startsWith("is")
+                        && methodName.length() > 2
+                        && method.invoke(bean) instanceof Boolean) {
+                    params.put(methodName.substring(2, 3).toLowerCase() + methodName.substring(3),
+                            method.invoke(bean));
+                }
+
+            }
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return params;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +47,57 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        Object bean = null;
+        try {
+            bean = klass.getConstructor().newInstance();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                String medium = value.getClass().toString();
+                //比对参数类型
+                String klassParamType = medium.substring(medium.lastIndexOf("s") + 2);
+                //需要调用方法名
+                String methodName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
+
+                //获取bean所有方法
+                Method[] methods = getMethods(klass);
+                for (Method method : methods) {
+                    if (method.getName().equals(methodName)) {
+                        // 对比方法参数类型
+                        String callMethodParamType = getMethodParam(method.toString());
+                        //参数相同 则进行实例化对象
+                        if (klassParamType.equals(callMethodParamType)) {
+                            method.invoke(bean, value);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+
+        return (T) bean;
+    }
+
+    /**
+     * 获取类中所有方法
+     *
+     * @param bean javaBean
+     * @return Method[]
+     */
+    public static Method[] getMethods(Class<?> bean) {
+        return bean.getMethods();
+    }
+
+    /**
+     * 获取javaBean中方法参数全类名
+     *
+     * @param methodName 方法名
+     * @return 参数类型 全类名
+     */
+    public static String getMethodParam(String methodName) {
+        return methodName.substring(methodName.indexOf("(") + 1, methodName.indexOf(")"));
     }
 
     public static void main(String[] args) {
@@ -42,6 +116,9 @@ public class MapBeanConverter {
         private Integer id;
         private String name;
         private String privateField = "privateField";
+
+        public DemoJavaBean() {
+        }
 
         public int isolate() {
             System.out.println(privateField);
