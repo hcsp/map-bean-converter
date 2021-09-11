@@ -1,21 +1,9 @@
 package com.github.hcsp.reflection;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class MapBeanConverter {
-    public static boolean getValidMethod(Method method) {
-        return method.getParameterCount() == 0 && (method.getName().startsWith("get") || method.getName().startsWith("is"));
-    }
-
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
     // 例如，对于一个DemoJavaBean对象 { id = 1, name = "ABC" }
     // 应当返回一个Map { id -> 1, name -> "ABC", longName -> false }
@@ -24,20 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        try {
-            return Arrays.stream(Introspector.getBeanInfo(bean.getClass(), Object.class).getPropertyDescriptors())
-                    .filter(propertyDescriptor -> Objects.nonNull(propertyDescriptor.getReadMethod()))
-                    .collect(Collectors.toMap(PropertyDescriptor::getName, propertyDescriptor -> {
-                        try {
-                            return propertyDescriptor.getReadMethod().invoke(bean);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            e.printStackTrace();
-                            return null;
-                        }
-                    }));
-        } catch (IntrospectionException e) {
-            throw new RuntimeException(e);
-        }
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -48,23 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            T instance = klass.getConstructor().newInstance();
-            Arrays.stream(Introspector.getBeanInfo(klass, Object.class).getPropertyDescriptors())
-                    .filter(propertyDescriptor -> Objects.nonNull(propertyDescriptor.getWriteMethod()))
-                    .forEach(propertyDescriptor -> {
-                        if (map.containsKey(propertyDescriptor.getName())) {
-                            try {
-                                propertyDescriptor.getWriteMethod().invoke(instance, map.get(propertyDescriptor.getName()));
-                            } catch (IllegalAccessException | InvocationTargetException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }
-                    });
-            return instance;
-        } catch (IntrospectionException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+        return null;
     }
 
     public static void main(String[] args) {
