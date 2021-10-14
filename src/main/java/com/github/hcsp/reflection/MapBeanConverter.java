@@ -1,7 +1,5 @@
 package com.github.hcsp.reflection;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,29 +12,7 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        Map<String, Object> result = new HashMap<>();
-        Class<?> beanClass = bean.getClass();
-        Method[] methods = beanClass.getDeclaredMethods();
-        for (Method method: methods) {
-            String methodName = method.getName();
-            if (methodName.matches("get[A-Z].*")) {
-                String fieldName = methodName.substring(3, 4).toLowerCase() + methodName.substring(4);
-                try {
-                    result.put(fieldName, beanClass.getDeclaredMethod(methodName).invoke(bean));
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            if (methodName.matches("is[A-Z].*")) {
-                String fieldName = methodName.substring(2, 3).toLowerCase() + methodName.substring(3);
-                try {
-                    result.put(fieldName, beanClass.getDeclaredMethod(methodName).invoke(bean));
-                } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        return result;
+        return null;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -47,21 +23,7 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        try {
-            T result = klass.getConstructor().newInstance();
-            for (Map.Entry<String, Object> entry : map.entrySet()) {
-                String methodName = "set" + entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1);
-                try {
-                    Method method = klass.getDeclaredMethod(methodName, entry.getValue().getClass());
-                    method.invoke(result, entry.getValue());
-                } catch (NoSuchMethodException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return result;
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+        return null;
     }
 
     public static void main(String[] args) {
@@ -69,7 +31,6 @@ public class MapBeanConverter {
         bean.setId(100);
         bean.setName("AAAAAAAAAAAAAAAAAAA");
         System.out.println(beanToMap(bean));
-
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", 123);
