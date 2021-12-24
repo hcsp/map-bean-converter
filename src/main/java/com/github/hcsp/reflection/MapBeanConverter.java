@@ -1,7 +1,12 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -12,7 +17,23 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Map<String, Object> map = new HashMap<>();
+        List<Method> list = Arrays.stream(bean.getClass().getDeclaredMethods())
+                .filter(o -> o.getParameterCount() == 0 && o.getName().length() > 2)
+                .collect(Collectors.toList());
+        for (Method method : list) {
+            try {
+                String methedName = method.getName();
+                if (methedName.startsWith("get") && Character.isUpperCase(methedName.charAt(3))) {
+                    map.put(methedName.substring(3).replace(methedName.charAt(3), methedName.toLowerCase().charAt(3)), method.invoke(bean));
+                } else if (methedName.startsWith("is") && Character.isUpperCase(method.getName().charAt(2))) {
+                    map.put(methedName.substring(2).replace(methedName.charAt(2), methedName.toLowerCase().charAt(2)), method.invoke(bean));
+                }
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
+        return map;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +44,24 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T obj = null;
+        try {
+            obj = klass.getConstructor().newInstance();
+            List<Method> list = Arrays.stream(obj.getClass().getDeclaredMethods())
+                    .filter(method -> method.getName().startsWith("set"))
+                    .collect(Collectors.toList());
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                for (Method method : list) {
+                    String methodName = method.getName();
+                    if (methodName.substring(3).toLowerCase().equals(entry.getKey())) {
+                        method.invoke(obj, entry.getValue());
+                    }
+                }
+            }
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return obj;
     }
 
     public static void main(String[] args) {
