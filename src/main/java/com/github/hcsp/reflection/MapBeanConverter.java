@@ -69,10 +69,10 @@ public class MapBeanConverter {
     }
 
     public static void main(String[] args) {
-        DemoJavaBean bean = new DemoJavaBean();
-        bean.setId(100);
-        bean.setName("AAAAAAAAAAAAAAAAAAA");
-        System.out.println(beanToMap(bean));
+//        DemoJavaBean bean = new DemoJavaBean();
+//        bean.setId(100);
+//        bean.setName("AAAAAAAAAAAAAAAAAAA");
+//        System.out.println(beanToMap(bean));
 
         Map<String, Object> map = new HashMap<>();
         map.put("id", 123);
