@@ -1,7 +1,6 @@
 package com.github.hcsp.reflection;
 
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -19,17 +18,17 @@ public class MapBeanConverter {
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
         return Stream.of(bean.getClass()
-                .getDeclaredMethods())
+                        .getDeclaredMethods())
                 .filter(MapBeanConverter::isGetterMethod)
                 .collect(Collectors.toMap(MapBeanConverter::getFieldName, method -> {
-            try {
-                return method.invoke(bean);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
-        }));
+                    try {
+                        return method.invoke(bean);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
     }
 
     private static String getFieldName(Method object) {
@@ -71,7 +70,8 @@ public class MapBeanConverter {
             });
             return bean;
 
-        } catch (InstantiationException|IllegalAccessException|InvocationTargetException|NoSuchMethodException e) {
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
             throw new RuntimeException(e);
 //            e.printStackTrace();
         }
@@ -82,7 +82,7 @@ public class MapBeanConverter {
         String methodName = "set" + Character.toUpperCase(key.charAt(0)) + key.substring(1);
         try {
             return klass.getDeclaredMethod(methodName, klass.getDeclaredField(key).getType());
-        } catch (NoSuchMethodException|NoSuchFieldException e) {
+        } catch (NoSuchMethodException | NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
     }
