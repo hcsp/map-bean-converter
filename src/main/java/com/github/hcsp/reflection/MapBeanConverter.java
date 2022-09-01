@@ -1,7 +1,11 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MapBeanConverter {
     // 传入一个遵守Java Bean约定的对象，读取它的所有属性，存储成为一个Map
@@ -12,7 +16,48 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        return Arrays.stream(bean.getClass().getMethods())
+                .filter(MapBeanConverter::isGetter)
+                .collect(Collectors.toMap(MapBeanConverter::removeGetterFromMethodName,
+                        method -> invokeMethod(bean, method)));
+    }
+
+    private static Object invokeMethod(Object bean, Method method) {
+        try {
+            return method.invoke(bean);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean isGetClass(Method method) {
+        return method.getName().equals("getClass");
+    }
+
+    private static boolean isGetter(Method method) {
+        if (method.getParameterCount() != 0) {
+            return false;
+        }
+        if (isGetClass(method)) {
+            return false;
+        }
+        String name = method.getName();
+        return name.matches("get(\\p{javaUpperCase}\\w*)")
+                || name.matches("is(\\p{javaUpperCase}\\w*)");
+    }
+
+    private static String removeGetterFromMethodName(Method method) {
+        String name = method.getName();
+        int index = getIndexFromGetOrIs(name);
+        return lowCaseFirstCharacter(name, index);
+    }
+
+    private static String lowCaseFirstCharacter(String name, int index) {
+        return name.substring(index, index + 1).toLowerCase() + name.substring(index + 1);
+    }
+
+    private static int getIndexFromGetOrIs(String name) {
+        return name.matches("get(\\p{javaUpperCase}\\w*)") ? 3 : 2;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +68,31 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T bean = newBeanInstance(klass);
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            invokeMethod(klass, bean, entry);
+        }
+        return bean;
+    }
+
+    private static <T> void invokeMethod(Class<T> klass, T bean, Map.Entry<String, Object> entry) {
+        String methodName = "set" + entry.getKey().substring(0, 1).toUpperCase() + entry.getKey().substring(1);
+        try {
+            klass.getMethod(methodName, entry.getValue().getClass()).invoke(bean, entry.getValue());
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <T> T newBeanInstance(Class<T> klass) {
+        T bean;
+        try {
+            bean = klass.getConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        return bean;
     }
 
     public static void main(String[] args) {
@@ -36,6 +105,19 @@ public class MapBeanConverter {
         map.put("id", 123);
         map.put("name", "ABCDEFG");
         System.out.println(mapToBean(DemoJavaBean.class, map));
+
+//        String str = "123";
+//        Method[] methods = str.getClass().getMethods();
+//        Map<String, Object> map = Arrays.stream(methods)
+//                .filter(method -> method.getParameterCount() == 0)
+//                .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is"))
+//                .collect(Collectors.toMap(Method::getName, method -> {
+//                    try {
+//                        return method.invoke(str);
+//                    } catch (IllegalAccessException | InvocationTargetException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }));
     }
 
     public static class DemoJavaBean {
