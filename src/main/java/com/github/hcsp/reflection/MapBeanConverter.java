@@ -1,5 +1,7 @@
 package com.github.hcsp.reflection;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +14,31 @@ public class MapBeanConverter {
     //  2. 通过反射获得它包含的所有名为getXXX/isXXX，且无参数的方法（即getter方法）
     //  3. 通过反射调用这些方法并将获得的值存储到Map中返回
     public static Map<String, Object> beanToMap(Object bean) {
-        return null;
+        Class<?> cls = bean.getClass();
+        Method[] methods = cls.getDeclaredMethods();
+        Map<String, Object> result = new HashMap<>();
+        for (Method method : methods) {
+            String name = method.getName();
+            if (method.getParameterCount() != 0) {
+                continue;
+            }
+            if (method.getName().matches("^get[A-Z].*") && !method.getReturnType().equals(void.class)) {
+                String key = name.substring(3, 4).toLowerCase().concat(name.substring(4));
+                try {
+                    result.put(key, method.invoke(bean));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            } else if (method.getName().matches("^is[A-Z].*") && method.getReturnType().equals(boolean.class)) {
+                String key = name.substring(2, 3).toLowerCase().concat(name.substring(3));
+                try {
+                    result.put(key, method.invoke(bean));
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return result;
     }
 
     // 传入一个遵守Java Bean约定的Class和一个Map，生成一个该对象的实例
@@ -23,7 +49,19 @@ public class MapBeanConverter {
     //  2. 使用反射创建klass对象的一个实例
     //  3. 使用反射调用setter方法对该实例的字段进行设值
     public static <T> T mapToBean(Class<T> klass, Map<String, Object> map) {
-        return null;
+        T javaBean = null;
+        try {
+            javaBean = klass.getConstructor().newInstance();
+            for (String key : map.keySet()) {
+                Object value = map.get(key);
+                String name = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
+                Method method = klass.getMethod(name, value.getClass());
+                method.invoke(javaBean, value);
+            }
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        return javaBean;
     }
 
     public static void main(String[] args) {
